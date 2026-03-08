@@ -16,10 +16,10 @@ delete childEnv.CLAUDECODE;
 const app = express();
 app.use(express.json());
 
-// Bearer token auth middleware
+// Bearer token auth middleware — skip auth when API_TOKEN is not set
 app.use((req, res, next) => {
   if (!API_TOKEN) {
-    return res.status(403).json({ error: "Forbidden" });
+    return next();
   }
 
   const authHeader = req.headers.authorization;
@@ -95,6 +95,6 @@ app.post("/run", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`claude-ha-bridge listening on port ${PORT}`);
   if (!API_TOKEN) {
-    console.warn("WARNING: API_TOKEN is not set — all requests will be rejected");
+    console.warn("WARNING: API_TOKEN is not set — all requests will be unauthenticated");
   }
 });
