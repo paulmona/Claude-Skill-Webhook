@@ -14,7 +14,7 @@ A lightweight Dockerized Express API that wraps the Claude CLI (`claude -p`) for
 Create a `.env` file (or set environment variables):
 
 ```env
-CLAUDE_API_TOKEN=your-secret-bearer-token
+API_TOKEN=your-secret-bearer-token
 PORT=3131
 CLAUDE_TIMEOUT_MS=120000
 ```

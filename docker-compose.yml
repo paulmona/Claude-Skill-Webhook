@@ -8,7 +8,7 @@ services:
       - "${PORT:-3131}:${PORT:-3131}"
     environment:
       - PORT=${PORT:-3131}
-      - CLAUDE_API_TOKEN=${CLAUDE_API_TOKEN}
+      - API_TOKEN=${API_TOKEN}
       - CLAUDE_TIMEOUT_MS=${CLAUDE_TIMEOUT_MS:-120000}
     volumes:
       - claude-auth:/root/.claude

@@ -5,7 +5,7 @@ const { promisify } = require("util");
 const execFileAsync = promisify(execFile);
 
 const PORT = process.env.PORT || 3131;
-const CLAUDE_API_TOKEN = process.env.CLAUDE_API_TOKEN;
+const API_TOKEN = process.env.API_TOKEN;
 const CLAUDE_TIMEOUT_MS = parseInt(process.env.CLAUDE_TIMEOUT_MS, 10) || 120000;
 const HEALTH_TIMEOUT_MS = 15000;
 
@@ -18,12 +18,12 @@ app.use(express.json());
 
 // Bearer token auth middleware
 app.use((req, res, next) => {
-  if (!CLAUDE_API_TOKEN) {
+  if (!API_TOKEN) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
   const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== `Bearer ${CLAUDE_API_TOKEN}`) {
+  if (!authHeader || authHeader !== `Bearer ${API_TOKEN}`) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
@@ -94,7 +94,7 @@ app.post("/run", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`claude-ha-bridge listening on port ${PORT}`);
-  if (!CLAUDE_API_TOKEN) {
-    console.warn("WARNING: CLAUDE_API_TOKEN is not set — all requests will be rejected");
+  if (!API_TOKEN) {
+    console.warn("WARNING: API_TOKEN is not set — all requests will be rejected");
   }
 });
