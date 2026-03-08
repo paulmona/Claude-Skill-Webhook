@@ -1,0 +1,100 @@
+const express = require("express");
+const { execFile } = require("child_process");
+const { promisify } = require("util");
+
+const execFileAsync = promisify(execFile);
+
+const PORT = process.env.PORT || 3131;
+const CLAUDE_API_TOKEN = process.env.CLAUDE_API_TOKEN;
+const CLAUDE_TIMEOUT_MS = parseInt(process.env.CLAUDE_TIMEOUT_MS, 10) || 120000;
+const HEALTH_TIMEOUT_MS = 15000;
+
+// Clean env for child processes — strip CLAUDECODE to avoid nested-session errors
+const childEnv = { ...process.env };
+delete childEnv.CLAUDECODE;
+
+const app = express();
+app.use(express.json());
+
+// Bearer token auth middleware
+app.use((req, res, next) => {
+  if (!CLAUDE_API_TOKEN) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== `Bearer ${CLAUDE_API_TOKEN}`) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  next();
+});
+
+// Lightweight auth check — runs a tiny prompt to verify Claude CLI can reach the API
+async function checkClaudeAuth() {
+  try {
+    await execFileAsync("claude", ["-p", "ping", "--output-format", "json"], {
+      timeout: HEALTH_TIMEOUT_MS,
+      maxBuffer: 1024 * 1024,
+      env: childEnv,
+    });
+    return { authenticated: true };
+  } catch (err) {
+    return { authenticated: false };
+  }
+}
+
+// GET /health — check Claude CLI auth status
+app.get("/health", async (req, res) => {
+  const { authenticated } = await checkClaudeAuth();
+  if (authenticated) {
+    return res.json({ status: "ok" });
+  }
+  return res.status(401).json({ status: "unauthenticated" });
+});
+
+// POST /run — execute a prompt via Claude CLI
+app.post("/run", async (req, res) => {
+  const { prompt, system } = req.body || {};
+
+  if (!prompt || typeof prompt !== "string") {
+    return res.status(400).json({ error: "prompt is required" });
+  }
+
+  // Auth pre-check
+  const { authenticated } = await checkClaudeAuth();
+  if (!authenticated) {
+    return res.status(401).json({ status: "unauthenticated" });
+  }
+
+  const args = ["-p", prompt, "--output-format", "json"];
+  if (system && typeof system === "string") {
+    args.push("--system-prompt", system);
+  }
+
+  try {
+    const { stdout } = await execFileAsync("claude", args, {
+      timeout: CLAUDE_TIMEOUT_MS,
+      maxBuffer: 10 * 1024 * 1024,
+      env: childEnv,
+    });
+
+    const result = JSON.parse(stdout);
+    return res.json(result);
+  } catch (err) {
+    if (err.killed) {
+      return res.status(504).json({ error: "Claude CLI timed out" });
+    }
+    return res.status(500).json({
+      error: `Claude CLI exited with code ${err.code}`,
+      stderr: err.stderr || "",
+    });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`claude-ha-bridge listening on port ${PORT}`);
+  if (!CLAUDE_API_TOKEN) {
+    console.warn("WARNING: CLAUDE_API_TOKEN is not set — all requests will be rejected");
+  }
+});

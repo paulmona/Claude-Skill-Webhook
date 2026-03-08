@@ -1,0 +1,18 @@
+# Add to your configuration.yaml:
+#   rest_command: !include rest_commands.yaml
+#
+# Usage in automations/scripts:
+#   service: rest_command.claude_ask
+#   data:
+#     prompt: "What's the weather forecast summary for today?"
+#     system: "Respond in one sentence."
+
+claude_ask:
+  url: "http://<docker-host>:3131/run"
+  method: POST
+  headers:
+    Authorization: !secret claude_bridge_token
+    Content-Type: application/json
+  payload: '{"prompt": "{{ prompt }}", "system": "{{ system | default("") }}"}'
+  content_type: application/json
+  timeout: 120

@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  claude-api:
+    build: .
+    container_name: claude-ha-bridge
+    ports:
+      - "${PORT:-3131}:${PORT:-3131}"
+    environment:
+      - PORT=${PORT:-3131}
+      - CLAUDE_API_TOKEN=${CLAUDE_API_TOKEN}
+      - CLAUDE_TIMEOUT_MS=${CLAUDE_TIMEOUT_MS:-120000}
+    volumes:
+      - claude-auth:/root/.claude
+    restart: unless-stopped
+
+volumes:
+  claude-auth:

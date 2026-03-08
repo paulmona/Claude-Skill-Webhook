@@ -1,0 +1,12 @@
+{
+  "name": "claude-ha-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dockerized Express API wrapping Claude CLI for Home Assistant integration",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

@@ -1,0 +1,17 @@
+# Add to your configuration.yaml:
+#   binary_sensor: !include binary_sensors.yaml
+#
+# This sensor polls /health every 5 minutes.
+# When Claude CLI auth lapses, /health returns 401 and the sensor turns "off".
+# Use this in an automation to send a notification when auth needs renewal.
+
+- platform: rest
+  name: Claude CLI Auth
+  unique_id: claude_cli_auth_status
+  resource: "http://<docker-host>:3131/health"
+  headers:
+    Authorization: !secret claude_bridge_token
+  method: GET
+  scan_interval: 300
+  value_template: "{{ value_json.status == 'ok' }}"
+  device_class: connectivity
