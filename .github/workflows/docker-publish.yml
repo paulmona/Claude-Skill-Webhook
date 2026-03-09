@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    paths-ignore:
+      - "*.md"
+      - "homeassistant/**"
+      - "LICENSE"
 
 jobs:
   build-and-push:
@@ -19,7 +23,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/workout-autopilot
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/claude-skill-webhook
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}

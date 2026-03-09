@@ -1,6 +1,6 @@
-# Claude CLI Home Assistant Bridge
+# Claude Skill Webhook
 
-A lightweight Dockerized Express API that wraps the Claude CLI (`claude -p`) for Home Assistant integration. Runs on Unraid (or any Docker host), accepts prompts via HTTP POST, and returns Claude's response as JSON.
+A lightweight Dockerized Express API that triggers Claude CLI skills via webhooks. Designed for Home Assistant integration — receive a webhook, execute a Claude CLI slash command, return the result as JSON.
 
 ## Prerequisites
 
@@ -39,12 +39,12 @@ Follow the interactive OAuth flow. Auth persists in the Docker volume across res
 # Health check (should return {"status":"ok"})
 curl -s -H "Authorization: Bearer your-secret-bearer-token" http://localhost:3131/health
 
-# Test prompt
+# Trigger a skill
 curl -s -X POST \
   -H "Authorization: Bearer your-secret-bearer-token" \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Say hello in one word"}' \
-  http://localhost:3131/run
+  -d '{"skill": "get-garmin-data"}' \
+  http://localhost:3131/skill
 ```
 
 ## API
@@ -59,9 +59,33 @@ Returns Claude CLI auth status.
 | Not authenticated | 401 | `{"status": "unauthenticated"}` |
 | Bad/missing token | 403 | `{"error": "Forbidden"}` |
 
+### `POST /skill`
+
+Execute a Claude CLI skill (slash command).
+
+**Request body:**
+```json
+{
+  "skill": "get-garmin-data"
+}
+```
+
+Skill names must be alphanumeric, hyphens, or underscores. The server runs `claude -p /<skill-name>` and returns the result.
+
+**Responses:**
+
+| Status | Code | Body |
+|--------|------|------|
+| Success | 200 | Claude CLI JSON output |
+| Missing/invalid skill | 400 | `{"error": "..."}` |
+| Auth lapsed | 401 | `{"status": "unauthenticated"}` |
+| Bad bearer token | 403 | `{"error": "Forbidden"}` |
+| CLI error | 500 | `{"error": "...", "stderr": "..."}` |
+| Timeout | 504 | `{"error": "Claude CLI timed out"}` |
+
 ### `POST /run`
 
-Execute a Claude prompt.
+Execute a raw Claude prompt.
 
 **Request body:**
 ```json
@@ -71,16 +95,13 @@ Execute a Claude prompt.
 }
 ```
 
-**Responses:**
+Same response codes as `/skill`.
 
-| Status | Code | Body |
-|--------|------|------|
-| Success | 200 | Claude CLI JSON output |
-| Missing prompt | 400 | `{"error": "prompt is required"}` |
-| Auth lapsed | 401 | `{"status": "unauthenticated"}` |
-| Bad bearer token | 403 | `{"error": "Forbidden"}` |
-| CLI error | 500 | `{"error": "...", "stderr": "..."}` |
-| Timeout | 504 | `{"error": "Claude CLI timed out"}` |
+## Skills
+
+Skills are Claude CLI slash commands defined in `.claude/commands/`:
+
+- **`get-garmin-data`** — Fetches latest workout from Garmin Connect and logs it to a Notion Training Log. Updates existing "Planned" entries or creates new ones. Includes running-specific metrics when applicable.
 
 ## Home Assistant Integration
 
