@@ -142,7 +142,7 @@ app.post("/run", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`claude-ha-bridge listening on port ${PORT}`);
+  console.log(`claude-skills-runner listening on port ${PORT}`);
   if (!API_TOKEN) {
     console.warn("WARNING: API_TOKEN is not set — all requests will be unauthenticated");
   }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Workout Autopilot — a Dockerized Express API that triggers Claude CLI skills via webhooks from Home Assistant. The primary use case: Strava finishes a workout → HA receives webhook → HA fires webhook to this container with a skill name → Claude CLI executes the skill (e.g., fetch Garmin data and log to Notion).
+Claude Skills Runner — a Dockerized Express API that triggers Claude CLI skills via webhooks from Home Assistant. The primary use case: Strava finishes a workout → HA receives webhook → HA fires webhook to this container with a skill name → Claude CLI executes the skill (e.g., fetch Garmin data and log to Notion).
 
 Note: `ARCHITECTURE.md` describes an earlier planned architecture that was abandoned. Only the HA bridge is active.
 
@@ -35,7 +35,7 @@ npm start                        # starts server.js on PORT (default 3131)
 
 # Docker
 docker compose up -d --build     # build and start container
-docker exec -it claude-ha-bridge claude auth login  # first-run OAuth
+docker exec -it claude-skills-endpoint claude auth login  # first-run OAuth
 docker compose logs -f claude-api                   # view logs
 
 # Trigger a skill

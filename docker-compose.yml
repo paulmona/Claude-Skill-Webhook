@@ -3,7 +3,7 @@ version: "3.8"
 services:
   claude-api:
     build: .
-    container_name: claude-ha-bridge
+    container_name: claude-skills-runner
     ports:
       - "${PORT:-3131}:${PORT:-3131}"
     environment:

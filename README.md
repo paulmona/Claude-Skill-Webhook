@@ -1,4 +1,4 @@
-# Claude Skill Webhook
+# Claude Skills Runner
 
 A lightweight Dockerized Express API that triggers Claude CLI skills via webhooks. Designed for Home Assistant integration — receive a webhook, execute a Claude CLI slash command, return the result as JSON.
 
@@ -28,7 +28,7 @@ docker compose up -d --build
 ### 3. Authenticate Claude CLI (first run only)
 
 ```bash
-docker exec -it claude-ha-bridge claude auth login
+docker exec -it claude-skills-endpoint claude auth login
 ```
 
 Follow the interactive OAuth flow. Auth persists in the Docker volume across restarts.
@@ -119,12 +119,12 @@ For Unraid, you may want to use a bind mount instead of a named volume:
 
 ```yaml
 volumes:
-  - /mnt/user/appdata/claude-ha-bridge:/root/.claude
+  - /mnt/user/appdata/claude-skills-endpoint:/root/.claude
 ```
 
 ## Troubleshooting
 
-**Auth expired:** Run `docker exec -it claude-ha-bridge claude auth login` again.
+**Auth expired:** Run `docker exec -it claude-skills-endpoint claude auth login` again.
 
 **Container logs:** `docker compose logs -f claude-api`
 
