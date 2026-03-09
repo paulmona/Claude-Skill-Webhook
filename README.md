@@ -17,6 +17,7 @@ Create a `.env` file (or set environment variables):
 API_TOKEN=your-secret-bearer-token
 PORT=3131
 CLAUDE_TIMEOUT_MS=120000
+SKILLS_REPO=your-github-user/your-skills-repo
 ```
 
 ### 2. Build & Start
@@ -99,9 +100,25 @@ Same response codes as `/skill`.
 
 ## Skills
 
-Skills are Claude CLI slash commands defined in `.claude/commands/`:
+Skills are Claude CLI slash commands defined as markdown files. They can come from two sources:
+
+### Built-in Skills
+
+Baked into the Docker image from `.claude/commands/`:
 
 - **`get-garmin-data`** — Fetches latest workout from Garmin Connect and logs it to a Notion Training Log. Updates existing "Planned" entries or creates new ones. Includes running-specific metrics when applicable.
+- **`test-notion`** — Creates a test entry in Notion to verify the integration is working.
+
+### Remote Skills
+
+Pull skills from a public GitHub repo on container startup — no rebuild needed. Set `SKILLS_REPO` to a GitHub repo (e.g. `paulmona/claude-skills`). The repo should contain `.md` skill files in its root directory.
+
+| Variable | Default | Description |
+|---|---|---|
+| `SKILLS_REPO` | _(none)_ | GitHub repo to pull skills from (e.g. `user/repo`) |
+| `SKILLS_BRANCH` | `main` | Branch to pull from |
+
+Remote skills are merged with built-in skills on each container start. To add a new skill, push it to the repo and restart the container.
 
 ## Home Assistant Integration
 
@@ -119,12 +136,12 @@ For Unraid, you may want to use a bind mount instead of a named volume:
 
 ```yaml
 volumes:
-  - /mnt/user/appdata/claude-skills-endpoint:/root/.claude
+  - /mnt/cache/appdata/claude-skills-runner:/home/claude/.claude
 ```
 
 ## Troubleshooting
 
-**Auth expired:** Run `docker exec -it claude-skills-endpoint claude auth login` again.
+**Auth expired:** Run `docker exec -it claude-skills-runner claude setup-token` again.
 
 **Container logs:** `docker compose logs -f claude-api`
 

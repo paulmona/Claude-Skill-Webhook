@@ -11,17 +11,22 @@ Note: `ARCHITECTURE.md` describes an earlier planned architecture that was aband
 ## Codebase
 
 Single-file Express server (`server.js`) with:
-- `POST /skill` — accepts `{skill}`, executes `claude -p /<skill-name>`, returns JSON. Skill names are validated (alphanumeric, hyphens, underscores only).
+- `POST /skill` — accepts `{skill}`, executes `claude -p /<skill-name>`, returns JSON. Skill names are validated (alphanumeric, hyphens, underscores only). Runs with `--permission-mode bypassPermissions` for headless MCP tool use.
 - `POST /run` — accepts `{prompt, system?}`, executes a raw prompt via `claude -p`, returns JSON
 - `GET /health` — checks Claude CLI auth status
 - Bearer token auth via `API_TOKEN` env var (optional — skipped when unset)
-- Strips `CLAUDECODE` from child process env to avoid nested-session errors
+- Closes child process stdin to prevent CLI hanging in non-TTY contexts
 
 ### Skills
 
-Skills live in `.claude/commands/` as markdown files:
+Skills are Claude CLI slash commands defined as markdown files. Two sources:
 
-- **`get-garmin-data`** — Fetches latest Garmin workout via Garmin MCP, logs it to the Notion Training Log database (`31954c77-b226-8028-96de-c94465664aa5`). Handles upsert: updates existing "Planned" entries or creates new ones. Skips true duplicates. Populates running-specific metrics (pace, cadence, power, stride length) when applicable. Has pre-authorized Notion write permission.
+1. **Built-in** — `.claude/commands/` in this repo (baked into Docker image)
+2. **Remote** — pulled from a public GitHub repo on container startup via `SKILLS_REPO` env var. Remote skills are `.md` files in the repo root.
+
+Built-in skills:
+- **`get-garmin-data`** — Fetches latest Garmin workout via Garmin MCP, logs it to the Notion Training Log database. Handles upsert: updates existing "Planned" entries or creates new ones. Skips true duplicates. Populates running-specific metrics when applicable.
+- **`test-notion`** — Creates a test entry in Notion Training Log to verify integration. Requires manual cleanup.
 
 ### Home Assistant Config
 
@@ -35,8 +40,8 @@ npm start                        # starts server.js on PORT (default 3131)
 
 # Docker
 docker compose up -d --build     # build and start container
-docker exec -it claude-skills-endpoint claude auth login  # first-run OAuth
-docker compose logs -f claude-api                   # view logs
+docker exec -it claude-skills-runner claude setup-token  # auth
+docker compose logs -f claude-api                        # view logs
 
 # Trigger a skill
 curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
@@ -50,3 +55,5 @@ No tests, linter, or build step exist.
 - `API_TOKEN` — bearer token for auth (optional, auth skipped when unset)
 - `PORT` — server port (default 3131)
 - `CLAUDE_TIMEOUT_MS` — CLI execution timeout in ms (default 120000)
+- `SKILLS_REPO` — public GitHub repo to pull skills from on startup (e.g. `paulmona/claude-skills`). Skills are `.md` files in the repo root.
+- `SKILLS_BRANCH` — branch to pull from (default: `main`)

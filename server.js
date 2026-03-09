@@ -24,6 +24,17 @@ delete childEnv.CLAUDECODE;
 const app = express();
 app.use(express.json());
 
+// Request logging
+app.use((req, res, next) => {
+  const start = Date.now();
+  const { method, url } = req;
+  console.log(`→ ${method} ${url}${req.body && Object.keys(req.body).length ? " " + JSON.stringify(req.body) : ""}`);
+  res.on("finish", () => {
+    console.log(`← ${method} ${url} ${res.statusCode} (${Date.now() - start}ms)`);
+  });
+  next();
+});
+
 // Bearer token auth middleware — skip auth when API_TOKEN is not set
 app.use((req, res, next) => {
   if (!API_TOKEN) {
