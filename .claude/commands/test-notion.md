@@ -9,14 +9,14 @@ Create a test entry in the Notion Training Log to verify the container and Notio
 1. Create a new page in the Notion Training Log database (ID: `31954c77-b226-8028-96de-c94465664aa5`) with:
    - **Name**: "🧪 Test"
    - **Date**: Today's date (YYYY-MM-DD, `is_datetime: 0`)
-   - **Status**: "Done"
+   - **Status**: "Planned"
 
-2. After creating, immediately delete the page you just created.
+2. Respond with "Test passed — created test entry." and include the page URL. If any step fails, respond with the error details.
 
-3. Respond with "Test passed — Notion write and delete successful." If any step fails, respond with the error details.
+Note: The test entry must be manually deleted from Notion afterward.
 
 ## Important
 
 - Do NOT ask for permission to write to Notion. This skill has pre-authorized Notion writes.
 - Do NOT ask any questions. Run fully autonomously.
-- Always clean up by deleting the test entry.
+- Do NOT attempt to delete the entry — Notion MCP does not support deletion.
