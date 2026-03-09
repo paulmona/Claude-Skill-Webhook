@@ -9,6 +9,7 @@ COPY package.json ./
 RUN npm install --production
 
 COPY server.js ./
+COPY .claude/commands/ ./.claude/commands/
 
 ENV PORT=3131
 EXPOSE ${PORT}
