@@ -1,7 +1,7 @@
 FROM node:20-slim
 
 # Install Claude CLI globally and sudo for entrypoint permissions fix
-RUN apt-get update && apt-get install -y --no-install-recommends sudo git && rm -rf /var/lib/apt/lists/* \
+RUN apt-get update && apt-get install -y --no-install-recommends sudo git procps && rm -rf /var/lib/apt/lists/* \
     && npm install -g @anthropic-ai/claude-code
 
 # Create non-root user with passwordless sudo (for fixing volume permissions on startup)

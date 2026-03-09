@@ -85,12 +85,6 @@ app.post("/skill", async (req, res) => {
     return res.status(400).json({ error: "invalid skill name" });
   }
 
-  // Auth pre-check
-  const { authenticated } = await checkClaudeAuth();
-  if (!authenticated) {
-    return res.status(401).json({ status: "unauthenticated" });
-  }
-
   const args = ["-p", `/${skill}`, "--output-format", "json", "--permission-mode", "bypassPermissions"];
 
   try {
@@ -101,11 +95,15 @@ app.post("/skill", async (req, res) => {
     });
 
     const result = JSON.parse(stdout);
+    console.log(`[skill:${skill}] turns=${result.num_turns} duration=${result.duration_ms}ms error=${result.is_error}`);
+    console.log(`[skill:${skill}] result: ${result.result}`);
     return res.json(result);
   } catch (err) {
     if (err.killed) {
+      console.error(`[skill:${skill}] TIMEOUT after ${CLAUDE_TIMEOUT_MS}ms`);
       return res.status(504).json({ error: "Claude CLI timed out" });
     }
+    console.error(`[skill:${skill}] ERROR code=${err.code} stderr=${err.stderr || ""}`);
     return res.status(500).json({
       error: `Claude CLI exited with code ${err.code}`,
       stderr: err.stderr || "",
