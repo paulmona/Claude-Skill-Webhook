@@ -80,7 +80,7 @@ app.post("/skill", async (req, res) => {
     return res.status(401).json({ status: "unauthenticated" });
   }
 
-  const args = ["-p", `/${skill}`, "--output-format", "json"];
+  const args = ["-p", `/${skill}`, "--output-format", "json", "--permission-mode", "bypassPermissions"];
 
   try {
     const { stdout } = await execFileAsync("claude", args, {
