@@ -1,8 +1,16 @@
 const express = require("express");
 const { execFile } = require("child_process");
-const { promisify } = require("util");
 
-const execFileAsync = promisify(execFile);
+// Wrapper that closes stdin to prevent CLI from hanging waiting for input
+function execFileAsync(cmd, args, opts) {
+  return new Promise((resolve, reject) => {
+    const child = execFile(cmd, args, opts, (err, stdout, stderr) => {
+      if (err) { err.stdout = stdout; err.stderr = stderr; return reject(err); }
+      resolve({ stdout, stderr });
+    });
+    child.stdin.end();
+  });
+}
 
 const PORT = process.env.PORT || 3131;
 const API_TOKEN = process.env.API_TOKEN;
