@@ -53,7 +53,48 @@ app.get("/health", async (req, res) => {
   return res.status(401).json({ status: "unauthenticated" });
 });
 
-// POST /run — execute a prompt via Claude CLI
+// POST /skill — execute a Claude CLI skill (slash command)
+app.post("/skill", async (req, res) => {
+  const { skill } = req.body || {};
+
+  if (!skill || typeof skill !== "string") {
+    return res.status(400).json({ error: "skill is required" });
+  }
+
+  // Only allow alphanumeric, hyphens, and underscores in skill names
+  if (!/^[a-zA-Z0-9_-]+$/.test(skill)) {
+    return res.status(400).json({ error: "invalid skill name" });
+  }
+
+  // Auth pre-check
+  const { authenticated } = await checkClaudeAuth();
+  if (!authenticated) {
+    return res.status(401).json({ status: "unauthenticated" });
+  }
+
+  const args = ["-p", `/${skill}`, "--output-format", "json"];
+
+  try {
+    const { stdout } = await execFileAsync("claude", args, {
+      timeout: CLAUDE_TIMEOUT_MS,
+      maxBuffer: 10 * 1024 * 1024,
+      env: childEnv,
+    });
+
+    const result = JSON.parse(stdout);
+    return res.json(result);
+  } catch (err) {
+    if (err.killed) {
+      return res.status(504).json({ error: "Claude CLI timed out" });
+    }
+    return res.status(500).json({
+      error: `Claude CLI exited with code ${err.code}`,
+      stderr: err.stderr || "",
+    });
+  }
+});
+
+// POST /run — execute a raw prompt via Claude CLI
 app.post("/run", async (req, res) => {
   const { prompt, system } = req.body || {};
 
