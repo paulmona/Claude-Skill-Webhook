@@ -88,22 +88,31 @@ app.post("/skill", async (req, res) => {
   const args = ["-p", `/${skill}`, "--output-format", "json", "--permission-mode", "bypassPermissions"];
 
   try {
-    const { stdout } = await execFileAsync("claude", args, {
+    console.log(`[skill:${skill}] executing: claude ${args.join(" ")}`);
+    const { stdout, stderr } = await execFileAsync("claude", args, {
       timeout: CLAUDE_TIMEOUT_MS,
       maxBuffer: 10 * 1024 * 1024,
       env: childEnv,
     });
 
+    if (stderr) {
+      console.warn(`[skill:${skill}] stderr: ${stderr}`);
+    }
+
     const result = JSON.parse(stdout);
-    console.log(`[skill:${skill}] turns=${result.num_turns} duration=${result.duration_ms}ms error=${result.is_error}`);
+    console.log(`[skill:${skill}] turns=${result.num_turns} duration=${result.duration_ms}ms input_tokens=${result.input_tokens} output_tokens=${result.output_tokens} error=${result.is_error}`);
     console.log(`[skill:${skill}] result: ${result.result}`);
     return res.json(result);
   } catch (err) {
     if (err.killed) {
       console.error(`[skill:${skill}] TIMEOUT after ${CLAUDE_TIMEOUT_MS}ms`);
+      if (err.stdout) console.error(`[skill:${skill}] partial stdout: ${err.stdout}`);
+      if (err.stderr) console.error(`[skill:${skill}] stderr: ${err.stderr}`);
       return res.status(504).json({ error: "Claude CLI timed out" });
     }
-    console.error(`[skill:${skill}] ERROR code=${err.code} stderr=${err.stderr || ""}`);
+    console.error(`[skill:${skill}] ERROR code=${err.code}`);
+    if (err.stdout) console.error(`[skill:${skill}] stdout: ${err.stdout}`);
+    if (err.stderr) console.error(`[skill:${skill}] stderr: ${err.stderr}`);
     return res.status(500).json({
       error: `Claude CLI exited with code ${err.code}`,
       stderr: err.stderr || "",
@@ -131,18 +140,31 @@ app.post("/run", async (req, res) => {
   }
 
   try {
-    const { stdout } = await execFileAsync("claude", args, {
+    console.log(`[run] executing: claude ${args.join(" ")}`);
+    const { stdout, stderr } = await execFileAsync("claude", args, {
       timeout: CLAUDE_TIMEOUT_MS,
       maxBuffer: 10 * 1024 * 1024,
       env: childEnv,
     });
 
+    if (stderr) {
+      console.warn(`[run] stderr: ${stderr}`);
+    }
+
     const result = JSON.parse(stdout);
+    console.log(`[run] turns=${result.num_turns} duration=${result.duration_ms}ms input_tokens=${result.input_tokens} output_tokens=${result.output_tokens} error=${result.is_error}`);
+    console.log(`[run] result: ${result.result}`);
     return res.json(result);
   } catch (err) {
     if (err.killed) {
+      console.error(`[run] TIMEOUT after ${CLAUDE_TIMEOUT_MS}ms`);
+      if (err.stdout) console.error(`[run] partial stdout: ${err.stdout}`);
+      if (err.stderr) console.error(`[run] stderr: ${err.stderr}`);
       return res.status(504).json({ error: "Claude CLI timed out" });
     }
+    console.error(`[run] ERROR code=${err.code}`);
+    if (err.stdout) console.error(`[run] stdout: ${err.stdout}`);
+    if (err.stderr) console.error(`[run] stderr: ${err.stderr}`);
     return res.status(500).json({
       error: `Claude CLI exited with code ${err.code}`,
       stderr: err.stderr || "",
