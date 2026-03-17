@@ -12,6 +12,7 @@ services:
       - CLAUDE_TIMEOUT_MS=${CLAUDE_TIMEOUT_MS:-120000}
     volumes:
       - claude-auth:/root/.claude
+      - ./.claude/commands:/app/.claude/commands
     restart: unless-stopped
 
 volumes:
